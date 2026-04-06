@@ -1,65 +1,75 @@
 # Wrangler — Claude Code Plugin
 
-A Claude Code plugin for designing and running multi-agent harnesses.
-Based on Anthropic's 3-agent architecture (Planner → Generator → Evaluator).
+A Claude Code plugin that designs **custom multi-agent harnesses tailored to each project**.
+Not a fixed template — Wrangler analyzes your project's specific failures and proposes
+the right agent architecture (or recommends no harness at all).
 
 ## What It Does
 
-When you mention "harness", "multi-agent", "feedback loop", or similar terms,
-Claude Code loads the wrangler skill and guides you through:
+Wrangler is a **harness architect**. When triggered, it walks you through:
 
-1. **Baseline measurement** — Run a single agent first, classify failures
-2. **Agent role separation** — Split conflicting roles (creating vs evaluating)
-3. **Grading criteria design** — Convert subjective judgments into gradable criteria
-4. **Context management** — Context reset, handoff artifacts, progress tracking
+1. **Project analysis** — Understands what you're building (one question at a time)
+2. **Failure diagnosis** — Classifies observed single-agent failures (direction / execution / quality / context)
+3. **Custom harness design** — Proposes the minimal agent combination that fixes YOUR failures
+4. **Implementation** — Generates system prompts and sets up orchestration via Claude Code's Agent tool
+5. **Iteration** — Run, observe, shrink unnecessary components
+
+### Not Every Project Needs a Harness
+
+Wrangler may recommend **no harness at all** if a single agent is sufficient.
+Different projects get different architectures:
+
+| Project | Recommended Architecture |
+|---------|------------------------|
+| Complex full-stack app | Planner → Generator → Evaluator |
+| Design / creative task | Generator → Critic |
+| Data migration | Validator → Transformer → Validator |
+| Parallelizable workload | Decomposer → Workers → Assembler |
+| Long task, no quality issues | Single agent + context reset |
+| Simple feature | No harness needed |
 
 ## Installation
 
 ### Via Claude Code Plugin System
 
 ```bash
-# If published to a marketplace:
 /plugin install wrangler
 ```
 
 ### Manual Installation
 
 ```bash
-# Clone the repository
 git clone https://github.com/panicgit/wrangler.git
-
-# Copy to Claude Code plugins directory
-cp -r wrangler ~/.claude/plugins/local/wrangler
-```
-
-Then enable in Claude Code:
-```
-/plugin enable wrangler
+cp -r wrangler ~/.claude/plugins/cache/wrangler/wrangler/1.0.0
 ```
 
 ## Usage
 
-Once installed, simply describe your task in Claude Code:
+Once installed, describe your situation in Claude Code:
 
 ```
-I need to build a full-stack chat app, but single-agent keeps failing.
-Help me design a harness for this.
+My single agent keeps reducing scope when building a full-stack app.
+Help me design a harness.
 ```
 
-Claude Code will automatically load the wrangler skill and walk you through the design process.
+Wrangler will ask about your project step by step, diagnose the failures,
+and design a custom harness. All generated files (progress, handoff artifacts,
+sprint contracts, etc.) are stored in `.wrangler/` at your project root.
 
-### Available Skill
+### Trigger Keywords
 
-| Skill | Trigger |
-|-------|---------|
-| `wrangler` | "harness", "multi-agent", "planner-generator-evaluator", "long-running agent", "feedback loop", "context reset" |
+| Language | Keywords |
+|----------|----------|
+| English | "harness", "multi-agent", "feedback loop", "long-running agent", "context reset", "agent orchestration" |
+| Korean | "하네스", "멀티 에이전트", "피드백 루프", "컨텍스트 리셋", "자율 코딩", "에이전트 설계" |
 
 ## Plugin Structure
 
 ```
 wrangler/
 ├── .claude-plugin/
-│   └── plugin.json                    ← Plugin metadata
+│   ├── plugin.json                    ← Plugin metadata
+│   └── marketplace.json               ← Marketplace catalog
 ├── skills/
 │   └── wrangler/
 │       └── SKILL.md                   ← Main skill (auto-loaded by Claude Code)
@@ -85,8 +95,9 @@ wrangler/
 
 ## Optional: Standalone CLI Runner
 
-The `tools/` directory includes a standalone runner that executes the 3-agent loop
-via the Anthropic API. This is independent of Claude Code.
+The `tools/` directory includes a standalone runner that executes a 3-agent loop
+via the Anthropic API directly. This is independent of Claude Code and requires
+an Anthropic API key.
 
 ```bash
 cd tools && npm install
@@ -98,6 +109,14 @@ node harness-runner.js \
   --mode fullstack \
   --iterations 8
 ```
+
+## Core Principles
+
+1. **Always baseline first** — No observed failure → no harness
+2. **Design for the failure, not the framework** — Each component must address a specific problem
+3. **Cognitive conflicts must be separated** — Creating and evaluating in the same agent always fails
+4. **Harnesses are temporary** — Remove unnecessary components as models improve
+5. **Logs over output** — Read the agent's process, not just the result
 
 ## References
 
