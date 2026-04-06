@@ -25,15 +25,20 @@ architectures — or no harness at all.
 
 ## Phase 1: Project Analysis
 
-Before designing anything, understand the project. Ask the user:
+Before designing anything, understand the project **one question at a time**.
+Do NOT ask multiple questions at once. Follow this sequence, waiting for each answer:
 
-- **What are you building?** (scope, domain, tech stack)
-- **Have you tried running a single agent on this?** If yes, what happened?
-- **What specific problems did you observe?** (scope reduction, bugs, quality issues, context overflow)
-- **How complex is the task?** (single feature, MVP, full application)
+**Step 1** → "What are you building?"
+Let the user describe the project. Listen.
 
-If the user hasn't tried a single agent yet, recommend they try first.
-A harness should only be added when single-agent execution demonstrably fails.
+**Step 2** → "Have you tried running this with a single agent?"
+- If **no** → Recommend they try a single agent first. A harness is only needed when single-agent execution demonstrably fails. Stop here until they have baseline results.
+- If **yes** → Proceed to Step 3.
+
+**Step 3** → "What went wrong?"
+Let the user describe the failures in their own words. Do not offer categories yet — just listen.
+
+Then move to Phase 2 to diagnose what they described.
 
 > **Principle: No observed failure → No harness needed.**
 
