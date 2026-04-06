@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "wrangler",
+  "description": "Multi-agent harness engineering plugin for Claude Code",
+  "owner": {
+    "name": "panicgit"
+  },
+  "plugins": [
+    {
+      "name": "wrangler",
+      "description": "Design and run multi-agent harnesses (Planner → Generator → Evaluator) for complex, long-running AI tasks",
+      "category": "development",
+      "source": ".",
+      "homepage": "https://github.com/panicgit/wrangler"
+    }
+  ]
+}
