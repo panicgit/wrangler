@@ -21,6 +21,11 @@ architectures — or no harness at all.
 3. Design the minimal harness that fixes those failures
 4. Help the user implement it
 
+**Working directory:** All wrangler-generated files (progress files, handoff artifacts,
+sprint contracts, feature lists, evaluator feedback, etc.) must be created inside
+a `.wrangler/` directory at the project root. Create it if it doesn't exist.
+Never use `.omc/` or other plugin directories for wrangler files.
+
 ---
 
 ## Phase 1: Project Analysis
