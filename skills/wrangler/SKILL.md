@@ -1,5 +1,5 @@
 ---
-name: harness-engineering
+name: wrangler
 description: >
   Use when designing and configuring AI multi-agent harnesses.
   Trigger situations: user mentions "harness", "multi-agent", "planner-generator-evaluator",

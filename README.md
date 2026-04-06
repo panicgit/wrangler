@@ -1,4 +1,4 @@
-# Harness Engineering — Claude Code Plugin
+# Wrangler — Claude Code Plugin
 
 A Claude Code plugin for designing and running multi-agent harnesses.
 Based on Anthropic's 3-agent architecture (Planner → Generator → Evaluator).
@@ -6,7 +6,7 @@ Based on Anthropic's 3-agent architecture (Planner → Generator → Evaluator).
 ## What It Does
 
 When you mention "harness", "multi-agent", "feedback loop", or similar terms,
-Claude Code loads the harness engineering skill and guides you through:
+Claude Code loads the wrangler skill and guides you through:
 
 1. **Baseline measurement** — Run a single agent first, classify failures
 2. **Agent role separation** — Split conflicting roles (creating vs evaluating)
@@ -19,22 +19,22 @@ Claude Code loads the harness engineering skill and guides you through:
 
 ```bash
 # If published to a marketplace:
-/plugin install harness-engineering
+/plugin install wrangler
 ```
 
 ### Manual Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/harness-engineering.git
+git clone https://github.com/panicgit/wrangler.git
 
 # Copy to Claude Code plugins directory
-cp -r harness-engineering ~/.claude/plugins/local/harness-engineering
+cp -r wrangler ~/.claude/plugins/local/wrangler
 ```
 
 Then enable in Claude Code:
 ```
-/plugin enable harness-engineering
+/plugin enable wrangler
 ```
 
 ## Usage
@@ -46,22 +46,22 @@ I need to build a full-stack chat app, but single-agent keeps failing.
 Help me design a harness for this.
 ```
 
-Claude Code will automatically load the harness engineering skill and walk you through the design process.
+Claude Code will automatically load the wrangler skill and walk you through the design process.
 
 ### Available Skill
 
 | Skill | Trigger |
 |-------|---------|
-| `harness-engineering` | "harness", "multi-agent", "planner-generator-evaluator", "long-running agent", "feedback loop", "context reset" |
+| `wrangler` | "harness", "multi-agent", "planner-generator-evaluator", "long-running agent", "feedback loop", "context reset" |
 
 ## Plugin Structure
 
 ```
-harness-engineering/
+wrangler/
 ├── .claude-plugin/
 │   └── plugin.json                    ← Plugin metadata
 ├── skills/
-│   └── harness-engineering/
+│   └── wrangler/
 │       └── SKILL.md                   ← Main skill (auto-loaded by Claude Code)
 ├── docs/
 │   ├── 01-failure-analysis.md         ← Failure mode classification framework
@@ -98,8 +98,6 @@ node harness-runner.js \
   --mode fullstack \
   --iterations 8
 ```
-
-See [CLI documentation](tools/README.md) for details.
 
 ## References
 
