@@ -1,0 +1,6 @@
+{
+  "name": "harness-engineering",
+  "version": "1.0.0",
+  "description": "Design and run multi-agent harnesses (Planner → Generator → Evaluator) for complex, long-running AI tasks",
+  "skills": "./skills/"
+}

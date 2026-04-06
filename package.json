@@ -1,0 +1,32 @@
+{
+  "name": "harness-engineering",
+  "version": "1.0.0",
+  "description": "Claude Code plugin for designing and running multi-agent harnesses (Planner/Generator/Evaluator)",
+  "type": "module",
+  "license": "MIT",
+  "main": "tools/harness-runner.js",
+  "scripts": {
+    "start": "node tools/harness-runner.js",
+    "run:design": "node tools/harness-runner.js --mode design",
+    "run:fullstack": "node tools/harness-runner.js --mode fullstack"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.54.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "claude-code",
+    "claude-code-plugin",
+    "harness-engineering",
+    "multi-agent",
+    "anthropic",
+    "ai-agent",
+    "planner-generator-evaluator"
+  ],
+  "repository": {
+    "type": "git",
+    "url": ""
+  }
+}
