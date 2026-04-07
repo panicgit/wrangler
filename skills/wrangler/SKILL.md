@@ -21,10 +21,37 @@ architectures — or no harness at all.
 3. Design the minimal harness that fixes those failures
 4. Help the user implement it
 
-**Working directory:** All wrangler-generated files (progress files, handoff artifacts,
-sprint contracts, feature lists, evaluator feedback, etc.) must be created inside
+**Working directory:** All wrangler-generated files must be created inside
 a `.wrangler/` directory at the project root. Create it if it doesn't exist.
 Never use `.omc/` or other plugin directories for wrangler files.
+
+### File Structure
+
+```
+.wrangler/
+├── progress.md                                ← Global progress (all agents read/write)
+├── planner-to-generator--feature-list.md      ← Planner → Generator
+├── planner-to-generator--harness-design.md    ← Planner → Generator, Evaluator
+├── sprint-1/
+│   ├── planner-to-generator--contract.md      ← Sprint scope + completion criteria
+│   ├── evaluator-to-generator--feedback-01.md ← 1st evaluation
+│   ├── evaluator-to-generator--feedback-02.md ← 2nd evaluation
+│   ├── evaluator-to-generator--feedback-03.md ← 3rd evaluation (score >= 80 → next sprint)
+│   └── generator-to-next--handoff.md          ← Handoff when sprint ends
+├── sprint-2/
+│   ├── planner-to-generator--contract.md
+│   ├── evaluator-to-generator--feedback-01.md
+│   └── ...
+```
+
+### File Naming Rules
+
+- **Pattern:** `{from-agent}-to-{to-agent}--{content}.md`
+- **Iterating files** get numbered suffixes: `--feedback-01.md`, `--feedback-02.md`
+- **Non-iterating files** have no number: `--contract.md`, `--handoff.md`
+- **Agents always read the highest-numbered file** for iterated artifacts
+- **Global files** (read by all agents) live at `.wrangler/` root
+- **Sprint-scoped files** live in `.wrangler/sprint-N/`
 
 ---
 
@@ -170,9 +197,9 @@ Each sub-agent runs in its own context, preventing self-evaluation bias.
 ### Step 3: Set Up Context Management
 
 For long-running tasks, set up:
-- `claude-progress.txt` — shared state file across sessions
-- Handoff artifacts — detailed state for context resets
-- Sprint contracts — scoped work units that fit in one context window
+- `.wrangler/progress.md` — global shared state across all sessions
+- `.wrangler/sprint-N/generator-to-next--handoff.md` — detailed state for context resets
+- `.wrangler/sprint-N/planner-to-generator--contract.md` — scoped work units per sprint
 
 > For context management details: read `docs/04-context-management.md`
 > For iteration loop design: read `docs/05-iterative-loop.md`
