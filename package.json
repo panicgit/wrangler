@@ -1,6 +1,6 @@
 {
   "name": "wrangler",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Claude Code plugin for designing and running multi-agent harnesses (Planner/Generator/Evaluator)",
   "type": "module",
   "license": "MIT",
