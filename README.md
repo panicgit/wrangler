@@ -4,15 +4,34 @@ A Claude Code plugin that designs **custom multi-agent harnesses tailored to eac
 Not a fixed template — Wrangler analyzes your project's specific failures and proposes
 the right agent architecture (or recommends no harness at all).
 
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `/wrangler:design` | Interactive harness design wizard — analyzes failures, picks a pattern, generates agent configs |
+| `/wrangler:run <agent>` | Invoke a specific agent from your harness (e.g., `/wrangler:run planner`) |
+| `/wrangler:list` | Show all agents in your harness with roles, models, and workflow |
+
+### Quick Start
+
+```
+/wrangler:design          # Design your harness (first time)
+/wrangler:list            # See what agents were created
+/wrangler:run planner     # Run the planner agent
+/wrangler:run generator   # Run the generator agent
+/wrangler:run evaluator   # Run the evaluator agent
+```
+
 ## What It Does
 
-Wrangler is a **harness architect**. When triggered, it walks you through:
+Wrangler is a **harness architect**. The `/wrangler:design` wizard walks you through:
 
 1. **Project analysis** — Understands what you're building (one question at a time)
 2. **Failure diagnosis** — Classifies observed single-agent failures (direction / execution / quality / context)
 3. **Custom harness design** — Proposes the minimal agent combination that fixes YOUR failures
-4. **Implementation** — Generates system prompts and sets up orchestration via Claude Code's Agent tool
-5. **Iteration** — Run, observe, shrink unnecessary components
+4. **Config generation** — Creates `.wrangler/harness.json` + agent system prompts
+
+Then use `/wrangler:run <agent>` to invoke each agent with its tailored system prompt.
 
 ### Not Every Project Needs a Harness
 
@@ -30,38 +49,53 @@ Different projects get different architectures:
 
 ## Installation
 
-### Via Claude Code Plugin System
+### Via Marketplace (recommended)
 
 ```bash
+# In Claude Code:
+/marketplace add panicgit/wrangler
 /plugin install wrangler
 ```
 
 ### Manual Installation
 
 ```bash
+# 1. Clone the repository
 git clone https://github.com/panicgit/wrangler.git
-cp -r wrangler ~/.claude/plugins/cache/wrangler/wrangler/1.0.0
+
+# 2. Create the plugin directory
+mkdir -p ~/.claude/plugins/cache/wrangler/wrangler/1.0.1
+
+# 3. Copy contents (not the directory itself)
+cp -r wrangler/* ~/.claude/plugins/cache/wrangler/wrangler/1.0.1/
+cp -r wrangler/.claude-plugin ~/.claude/plugins/cache/wrangler/wrangler/1.0.1/
+
+# 4. Install dependencies
+cd ~/.claude/plugins/cache/wrangler/wrangler/1.0.1
+npm install
+
+# 5. Restart Claude Code
 ```
 
-## Usage
+## Generated Files
 
-Once installed, describe your situation in Claude Code:
+After running `/wrangler:design`, all harness files are stored in `.wrangler/` at your project root:
 
 ```
-My single agent keeps reducing scope when building a full-stack app.
-Help me design a harness.
+.wrangler/
+├── harness.json                               ← Harness config (agents, workflow, loops)
+├── progress.md                                ← Global progress (all agents read/write)
+├── agents/
+│   ├── planner.md                             ← Planner system prompt
+│   ├── generator.md                           ← Generator system prompt
+│   └── evaluator.md                           ← Evaluator system prompt
+├── sprint-1/
+│   ├── planner-to-generator--contract.md      ← Sprint scope + completion criteria
+│   ├── evaluator-to-generator--feedback-01.md ← 1st evaluation
+│   └── generator-to-next--handoff.md          ← Handoff when sprint ends
+└── sprint-2/
+    └── ...
 ```
-
-Wrangler will ask about your project step by step, diagnose the failures,
-and design a custom harness. All generated files (progress, handoff artifacts,
-sprint contracts, etc.) are stored in `.wrangler/` at your project root.
-
-### Trigger Keywords
-
-| Language | Keywords |
-|----------|----------|
-| English | "harness", "multi-agent", "feedback loop", "long-running agent", "context reset", "agent orchestration" |
-| Korean | "하네스", "멀티 에이전트", "피드백 루프", "컨텍스트 리셋", "자율 코딩", "에이전트 설계" |
 
 ## Plugin Structure
 
@@ -71,8 +105,12 @@ wrangler/
 │   ├── plugin.json                    ← Plugin metadata
 │   └── marketplace.json               ← Marketplace catalog
 ├── skills/
-│   └── wrangler/
-│       └── SKILL.md                   ← Main skill (auto-loaded by Claude Code)
+│   ├── design/
+│   │   └── SKILL.md                   ← /wrangler:design — harness design wizard
+│   ├── run/
+│   │   └── SKILL.md                   ← /wrangler:run — agent runner
+│   └── list/
+│       └── SKILL.md                   ← /wrangler:list — show agents
 ├── docs/
 │   ├── 01-failure-analysis.md         ← Failure mode classification framework
 │   ├── 02-agent-roles.md              ← Agent role separation principles
@@ -80,34 +118,16 @@ wrangler/
 │   ├── 04-context-management.md       ← Context reset & handoff
 │   └── 05-iterative-loop.md           ← Iteration loop design
 ├── templates/
-│   ├── planner-system-prompt.md       ← Planner agent system prompt
-│   ├── generator-system-prompt.md     ← Generator agent system prompt
-│   ├── evaluator-system-prompt.md     ← Evaluator agent system prompt
+│   ├── planner-system-prompt.md       ← Planner agent system prompt template
+│   ├── generator-system-prompt.md     ← Generator agent system prompt template
+│   ├── evaluator-system-prompt.md     ← Evaluator agent system prompt template
 │   ├── handoff-artifact.md            ← Cross-session handoff artifact
 │   ├── claude-progress.md             ← Progress tracking file
 │   └── sprint-contract.md             ← Sprint contract
 └── tools/                             ← Optional: standalone CLI runner
-    ├── harness-runner.js
     ├── tool-executor.js
     ├── context-reset.js
     └── progress-tracker.js
-```
-
-## Optional: Standalone CLI Runner
-
-The `tools/` directory includes a standalone runner that executes a 3-agent loop
-via the Anthropic API directly. This is independent of Claude Code and requires
-an Anthropic API key.
-
-```bash
-cd tools && npm install
-
-export ANTHROPIC_API_KEY=sk-ant-...
-
-node harness-runner.js \
-  --task "Real-time chat app with React + Node.js" \
-  --mode fullstack \
-  --iterations 8
 ```
 
 ## Core Principles

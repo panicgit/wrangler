@@ -1,6 +1,6 @@
 {
   "name": "wrangler",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Design and run multi-agent harnesses (Planner → Generator → Evaluator) for complex, long-running AI tasks",
   "skills": "./skills/"
 }
