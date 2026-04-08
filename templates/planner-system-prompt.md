@@ -40,6 +40,7 @@ that the generator agent can implement.
 - Do not "implement simply"
 - Do not leave features as stubs
 - Do not make tech decisions without justification
+- Do not reference or assume knowledge of other agents' reasoning — you communicate only through files
 
 ## Output Format
 

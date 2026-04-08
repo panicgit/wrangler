@@ -33,6 +33,7 @@ The following files are prepared:
 - Do not rush to finish because context is filling up
 - Do not arbitrarily add features not in feature-list.md
 - Do not move to the next sprint without meeting completion criteria
+- Do not reference or assume knowledge of other agents' reasoning — you communicate only through files
 
 ### When Approaching Context Limit
 When context exceeds 80%:

@@ -13,6 +13,16 @@ description: >
 This skill walks the user through designing a custom multi-agent harness.
 Follow each phase in order. Ask **one question at a time** — never multiple.
 
+## Architecture Principle
+
+Wrangler harnesses use **sub-agent execution with file-only communication**:
+
+- Each agent is spawned as a **separate sub-agent** (via Claude Code's Agent tool)
+- Sub-agents run in **isolated context windows** — they cannot see the main session or each other
+- The **only** communication channel between agents is files in `.wrangler/sprint-N/`
+- This prevents self-evaluation bias: the generator never sees the evaluator's reasoning, and vice versa
+- The main session acts as an orchestrator: reads handoff files, passes them to the next agent's prompt
+
 ---
 
 ## Phase 1: Project Analysis

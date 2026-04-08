@@ -13,6 +13,29 @@ description: >
 Dispatches a specific agent from the user's harness configuration.
 Manages sprint directories and inter-agent handoff files.
 
+## Architecture: Sub-Agent + File-Only Communication
+
+```
+Main Session (Orchestrator = you)
+  │
+  │  1. Read harness.json → identify agent + handoff config
+  │  2. Read input files from .wrangler/sprint-N/
+  │  3. Spawn sub-agent via Agent tool (separate context)
+  │  4. Verify output files were created
+  │  5. Suggest next agent
+  │
+  ├─ Agent(planner)   ← cannot see main session or other agents
+  ├─ Agent(generator)  ← cannot see main session or other agents
+  └─ Agent(evaluator)  ← cannot see main session or other agents
+```
+
+**Key rules:**
+- Each agent runs as a **sub-agent via the Agent tool** (separate context window)
+- Agents **cannot** see the main session conversation or each other's reasoning
+- The **only** communication channel between agents is `.wrangler/sprint-N/` files
+- The orchestrator reads input files and passes them in the agent's prompt
+- The orchestrator **never** summarizes or interprets another agent's output — it passes file contents verbatim
+
 ---
 
 ## Step 1: Load Harness Config
