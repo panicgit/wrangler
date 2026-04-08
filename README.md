@@ -59,7 +59,7 @@ Wrangler may recommend **no harness at all** if a single agent is sufficient.
 ```bash
 # In Claude Code:
 /marketplace add panicgit/wrangler
-/plugin install wrangler@panicdev
+/plugin install wrangler
 ```
 
 #### Manual Installation
@@ -85,7 +85,7 @@ npm install
 #### Update & Version Check
 
 ```bash
-/plugin update wrangler@panicdev    # Update to latest
+/plugin update wrangler    # Update to latest
 /plugin list                        # Check installed version
 ```
 
@@ -213,7 +213,7 @@ Wrangler는 **하네스 아키텍트**입니다. `/wrangler:design` 위자드가
 ```bash
 # Claude Code에서:
 /marketplace add panicgit/wrangler
-/plugin install wrangler@panicdev
+/plugin install wrangler
 ```
 
 #### 수동 설치
@@ -239,7 +239,7 @@ npm install
 #### 업데이트 및 버전 확인
 
 ```bash
-/plugin update wrangler@panicdev    # 최신 버전으로 업데이트
+/plugin update wrangler    # 최신 버전으로 업데이트
 /plugin list                        # 설치된 버전 확인
 ```
 
