@@ -81,7 +81,7 @@ Based on diagnosed failures, recommend ONE pattern:
 
 ## Phase 4: Generate Harness Config
 
-After the user agrees to a pattern, generate two things:
+After the user agrees to a pattern, generate the following:
 
 ### 4.1 Create `.wrangler/harness.json`
 
@@ -91,18 +91,26 @@ After the user agrees to a pattern, generate two things:
   "pattern": "<pattern-id>",
   "createdAt": "<ISO timestamp>",
   "failureModes": ["<diagnosed failures>"],
+  "currentSprint": 1,
   "agents": {
     "<agent-name>": {
       "role": "<human-readable role description>",
       "promptFile": "agents/<agent-name>.md",
       "subagentType": "<executor | code-reviewer>",
-      "model": "<opus | sonnet | haiku>",
-      "reads": ["<files this agent reads>"],
-      "writes": ["<files this agent writes>"]
+      "model": "<opus | sonnet | haiku>"
     }
   },
   "workflow": {
     "sequence": ["<ordered agent names>"],
+    "handoffs": [
+      {
+        "from": "<source agent>",
+        "to": "<target agent>",
+        "artifact": "<what is being passed>",
+        "filename": "<from>-to-<to>--<artifact>.md",
+        "iterable": false
+      }
+    ],
     "loops": [
       {
         "from": "<evaluator agent name>",
@@ -119,16 +127,63 @@ After the user agrees to a pattern, generate two things:
 }
 ```
 
-**Valid `subagentType` values:**
+#### handoffs 설계 규칙
+
+`workflow.handoffs`는 에이전트 간 소통 파일을 정의합니다:
+
+- **`from`/`to`**: 소통하는 에이전트 쌍
+- **`artifact`**: 전달하는 내용 (contract, feedback, handoff 등)
+- **`filename`**: 파일명 패턴. `{from}-to-{to}--{artifact}.md`
+- **`iterable`**: `true`이면 번호 붙음 (`--feedback-01.md`, `--feedback-02.md`)
+
+**Pattern A 예시:**
+
+```json
+"handoffs": [
+  {
+    "from": "planner",
+    "to": "generator",
+    "artifact": "contract",
+    "filename": "planner-to-generator--contract.md",
+    "iterable": false
+  },
+  {
+    "from": "evaluator",
+    "to": "generator",
+    "artifact": "feedback",
+    "filename": "evaluator-to-generator--feedback-{n}.md",
+    "iterable": true
+  },
+  {
+    "from": "generator",
+    "to": "next",
+    "artifact": "handoff",
+    "filename": "generator-to-next--handoff.md",
+    "iterable": false
+  }
+]
+```
+
+모든 핸드오프 파일은 `.wrangler/sprint-{currentSprint}/` 안에 생성됩니다.
+
+#### Valid `subagentType` values
+
 - `executor` — Full tools (bash, file read/write). Use for generator/worker agents.
 - `code-reviewer` — Read-only evaluation. Use for evaluator/critic agents.
 
-**Model guidelines:**
+#### Model guidelines
+
 - `opus` — Deep analysis, planning, complex generation
 - `sonnet` — Standard implementation, evaluation
 - `haiku` — Quick lookups, simple tasks
 
-### 4.2 Create agent system prompts
+### 4.2 Create sprint-1 directory
+
+```bash
+mkdir -p .wrangler/sprint-1
+```
+
+### 4.3 Create agent system prompts
 
 For each agent in `harness.json`, create `.wrangler/agents/<agent-name>.md`.
 
@@ -137,23 +192,50 @@ Use templates from the plugin as starting points:
 - `templates/generator-system-prompt.md`
 - `templates/evaluator-system-prompt.md`
 
-**Customize each prompt for THIS project:**
-- Replace generic placeholders with project-specific details
-- Add project-specific grading criteria (if evaluator)
-- Define what files the agent reads and writes
-- Specify what the agent must NEVER do
+**Customize each prompt for THIS project.** Each prompt MUST include:
+- The agent's role and boundaries
+- **Exactly which files to read** (full paths relative to `.wrangler/`)
+- **Exactly which files to write** (with naming convention)
+- What the agent must NEVER do
+
+**Example — planner prompt must include:**
+```
+## Output Files
+Write the following files to .wrangler/sprint-{N}/:
+- planner-to-generator--contract.md  (sprint scope and completion criteria)
+```
+
+**Example — evaluator prompt must include:**
+```
+## Input Files
+Read from .wrangler/sprint-{N}/:
+- planner-to-generator--contract.md  (what to evaluate against)
+
+## Output Files
+Write to .wrangler/sprint-{N}/:
+- evaluator-to-generator--feedback-{NN}.md  (numbered: 01, 02, 03...)
+```
 
 > For grading criteria design: read `docs/03-grading-criteria.md`
 > For context management: read `docs/04-context-management.md`
 
-### 4.3 Create `.wrangler/progress.md`
+### 4.4 Create `.wrangler/progress.md`
 
 Initialize the progress file using `templates/claude-progress.md` as a template.
+Include:
+```markdown
+## Current State
+- Sprint: 1
+- Phase: not started
+- Last agent: none
+- Iteration: 0
+```
 
-### 4.4 Summary
+### 4.5 Summary
 
 After generating, tell the user:
 1. What files were created
 2. How to list agents: `/wrangler:list`
 3. How to run an agent: `/wrangler:run <agent-name>`
 4. Recommended first agent to run (usually the first in the sequence)
+5. The workflow: `planner → generator → evaluator → (feedback loop) → next sprint`

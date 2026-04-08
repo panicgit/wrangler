@@ -3,6 +3,7 @@ name: run
 description: >
   Invoke an agent from a designed harness. Reads .wrangler/harness.json to find
   the agent config, loads its system prompt, and spawns it via the Agent tool.
+  Manages sprint directories and inter-agent communication files automatically.
   Usage: /wrangler:run <agent-name>
   Trigger: "run agent", "run harness", "에이전트 실행", "하네스 실행"
 ---
@@ -10,6 +11,7 @@ description: >
 # Wrangler: Run — Agent Runner
 
 Dispatches a specific agent from the user's harness configuration.
+Manages sprint directories and inter-agent handoff files.
 
 ---
 
@@ -23,32 +25,67 @@ Read `.wrangler/harness.json` in the current project root.
 
 ---
 
-## Step 2: Identify Target Agent
+## Step 2: Determine Current Sprint
+
+Read `harness.json.currentSprint` to get the sprint number (default: 1).
+
+Ensure the sprint directory exists:
+```
+.wrangler/sprint-{currentSprint}/
+```
+If it doesn't exist, create it.
+
+---
+
+## Step 3: Identify Target Agent
 
 Check the skill argument for an agent name (e.g., `/wrangler:run planner`).
 
-- If **no argument given** → Read agents from `harness.json` and ask:
+- If **no argument given** → List available agents and ask:
   "Which agent do you want to run? Available agents:"
-  Then list each agent with its role. Stop and wait for the user's choice.
+  Then list each agent with its role. Stop and wait.
 
-- If **argument given** → Look up the agent name in `harness.json.agents`.
-  If not found, show available agents and ask the user to pick one.
-
----
-
-## Step 3: Gather Context
-
-Before spawning the agent, gather sprint context:
-
-1. **Read `.wrangler/progress.md`** (if exists) — current project state
-2. **Check for feedback files** — find the latest `evaluator-to-generator--feedback-*.md` 
-   or similar files in the current sprint directory
-3. **Read the sprint contract** — `sprint-N/planner-to-generator--contract.md` if exists
-4. **Determine current sprint number** from progress.md
+- If **argument given** → Look up the agent in `harness.json.agents`.
+  If not found, show available agents and ask.
 
 ---
 
-## Step 4: Spawn the Agent
+## Step 4: Gather Input Files for This Agent
+
+Using `harness.json.workflow.handoffs`, find all handoffs where `to` matches 
+the target agent. These are the **input files** the agent needs.
+
+For each matching handoff:
+1. Build the file path: `.wrangler/sprint-{currentSprint}/{handoff.filename}`
+2. If `iterable: true`, find the **highest-numbered** file 
+   (e.g., `evaluator-to-generator--feedback-03.md`)
+3. Read the file contents
+
+Also read:
+- `.wrangler/progress.md` (if exists)
+- `.wrangler/sprint-{currentSprint}/planner-to-generator--contract.md` (if exists and agent is not planner)
+
+**If a required input file does not exist yet:**
+- This is normal if the previous agent hasn't run yet
+- Note which files are missing and include that info in the agent prompt
+
+---
+
+## Step 5: Determine Output Files for This Agent
+
+Using `harness.json.workflow.handoffs`, find all handoffs where `from` matches 
+the target agent. These are the **output files** the agent must write.
+
+For each matching handoff:
+1. Build the expected output path: `.wrangler/sprint-{currentSprint}/{handoff.filename}`
+2. If `iterable: true`, determine the next number:
+   - Count existing files matching the pattern
+   - Next file = count + 1, zero-padded (01, 02, 03...)
+   - Replace `{n}` in filename with the number
+
+---
+
+## Step 6: Spawn the Agent
 
 Read the agent's system prompt from `.wrangler/{agent.promptFile}`.
 
@@ -56,63 +93,105 @@ Construct and execute an Agent tool call:
 
 ```
 Agent({
-  description: "Wrangler: {agent-name}",
-  subagent_type: "{agent.subagentType}",   // "executor" or "code-reviewer"
-  model: "{agent.model}",                   // "opus", "sonnet", or "haiku"
+  description: "Wrangler: {agent-name} (sprint {currentSprint})",
+  subagent_type: "{agent.subagentType}",
+  model: "{agent.model}",
   prompt: `
 {contents of the agent's promptFile}
 
 ---
 
-## Current Project State
+## Sprint Info
+
+- Sprint: {currentSprint}
+- Sprint directory: .wrangler/sprint-{currentSprint}/
+
+## Input Files
+
+{for each input handoff file that exists:}
+### {filename}
+{file contents}
+
+{for each input that is missing:}
+### {filename} — NOT YET CREATED
+(The previous agent has not run yet for this sprint.)
+
+## Current Progress
 
 {contents of progress.md, if exists}
 
-## Current Sprint Context
+## Output Requirements
 
-{sprint contract contents, if exists}
+You MUST write the following files when done:
 
-## Evaluator Feedback (if any)
+{for each output handoff:}
+- .wrangler/sprint-{currentSprint}/{resolved filename}
+  Content: {artifact description}
 
-{latest feedback file contents, if exists}
+## Additional Instructions
 
-## Working Directory
-
-{current project root path}
-
-## Instructions
-
-Begin your work now. When done:
-1. Update .wrangler/progress.md with what you accomplished
-2. If you created evaluatable output, note it for the evaluator
+1. Write all output files to .wrangler/sprint-{currentSprint}/
+2. Update .wrangler/progress.md with:
+   - What you accomplished
+   - Current sprint phase
+   - Last agent: {agent-name}
+3. Working directory: {current project root path}
 `
 })
 ```
 
 ---
 
-## Step 5: Post-Run
+## Step 7: Post-Run Verification
 
 After the agent completes:
 
-1. **Show the result** to the user
-2. **Check the workflow sequence** in `harness.json.workflow.sequence`
-3. **Suggest the next agent** in the sequence:
-   - "The next agent in the sequence is `{next-agent}`. Run it with `/wrangler:run {next-agent}`"
-4. **If a feedback loop exists** and the evaluator just ran:
-   - Read the evaluator's score from the feedback file
-   - If score >= `passThreshold` → Suggest moving to the next sprint
-   - If score < `passThreshold` → Suggest re-running the generator:
-     "Score is {score}/{passThreshold}. Run `/wrangler:run {loop.to}` to iterate."
-   - If iterations >= `maxIterations` → Warn:
-     "Max iterations reached. Consider moving to the next sprint or adjusting criteria."
+### 7.1 Verify output files were created
 
----
+Check that each expected output file exists in `.wrangler/sprint-{currentSprint}/`.
+If any are missing, warn the user.
 
-## File Naming Convention
+### 7.2 Update progress tracking
 
-When agents write handoff files, use this pattern:
-- `{from-agent}-to-{to-agent}--{content}.md`
-- Iterating files get numbered: `--feedback-01.md`, `--feedback-02.md`
-- Sprint-scoped files go in `.wrangler/sprint-N/`
-- Global files go in `.wrangler/` root
+Read `.wrangler/progress.md` and verify it was updated by the agent.
+If not, update it with:
+```markdown
+- Last agent: {agent-name}
+- Sprint: {currentSprint}
+- Phase: {agent-name} completed
+- Iteration: {current iteration count for feedback loops}
+```
+
+### 7.3 Check feedback loop (if evaluator just ran)
+
+If the agent that just ran is the `from` side of a `workflow.loops` entry:
+
+1. Read the evaluator's latest feedback file
+2. Extract the score (look for "Overall Score: X / 100" or similar)
+3. Compare against `loop.passThreshold`:
+   - **Score >= threshold** → 
+     "Score {score}/{threshold} — passed. Moving to sprint {currentSprint + 1}."
+     Update `harness.json.currentSprint` to `currentSprint + 1`.
+     Create new sprint directory: `.wrangler/sprint-{newSprint}/`
+   - **Score < threshold** →
+     Count how many feedback files exist for this sprint.
+     If count >= `loop.maxIterations`:
+       "Max iterations ({maxIterations}) reached. Consider adjusting criteria or moving on."
+     Else:
+       "Score {score}/{threshold}. Iteration {count}/{maxIterations}. 
+        Run `/wrangler:run {loop.to}` to iterate."
+
+### 7.4 Suggest next step
+
+Look at `workflow.sequence` to find the next agent after the one that just ran.
+
+Display:
+```
+Sprint {currentSprint} status:
+- {agent-name}: done
+- {next-agent}: ready → /wrangler:run {next-agent}
+
+Created files:
+- .wrangler/sprint-{N}/{output-file-1}
+- .wrangler/sprint-{N}/{output-file-2}
+```
