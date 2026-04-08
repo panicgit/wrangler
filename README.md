@@ -54,7 +54,7 @@ Different projects get different architectures:
 ```bash
 # In Claude Code:
 /marketplace add panicgit/wrangler
-/plugin install wrangler
+/plugin install wrangler@panicdev
 ```
 
 ### Manual Installation

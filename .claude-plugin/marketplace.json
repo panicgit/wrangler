@@ -1,9 +1,9 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "wrangler",
+  "name": "panicdev",
   "description": "Multi-agent harness engineering plugin for Claude Code",
   "owner": {
-    "name": "panicgit"
+    "name": "panicdev"
   },
   "plugins": [
     {
