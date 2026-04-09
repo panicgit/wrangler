@@ -10,10 +10,7 @@
       "name": "wrangler",
       "description": "Design and run multi-agent harnesses (Planner → Generator → Evaluator) for complex, long-running AI tasks",
       "category": "development",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/panicgit/wrangler.git"
-      },
+      "source": ".",
       "homepage": "https://github.com/panicgit/wrangler"
     }
   ]
